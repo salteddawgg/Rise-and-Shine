@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat Room</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Join Section -->
+      <div id="join-section" class="join-section">
+        <div class="join-card">
+          <h1>Welcome to Chat Room</h1>
+          <div class="form-group">
+            <input
+              type="text"
+              id="username-input"
+              placeholder="Enter your username"
+              maxlength="20"
+            />
+          </div>
+          <button id="join-btn" class="btn btn-primary">Join Chat</button>
+        </div>
+      </div>
+
+      <!-- Chat Section -->
+      <div id="chat-section" class="chat-section hidden">
+        <div class="chat-container">
+          <!-- Sidebar -->
+          <div class="sidebar">
+            <div class="sidebar-header">
+              <h2>Active Users</h2>
+              <span id="user-count" class="user-count">0</span>
+            </div>
+            <div id="users-list" class="users-list">
+              <p class="empty-state">No users yet</p>
+            </div>
+            <button id="leave-btn" class="btn btn-secondary">Leave Chat</button>
+          </div>
+
+          <!-- Main Chat -->
+          <div class="chat-main">
+            <div class="chat-header">
+              <h2>Chat Room</h2>
+              <span id="current-user" class="current-user"></span>
+            </div>
+
+            <div id="messages-container" class="messages-container">
+              <div class="system-message">
+                <p>Welcome to the chat room!</p>
+              </div>
+            </div>
+
+            <div id="typing-indicator" class="typing-indicator hidden">
+              <span></span><span></span><span></span>
+              <p id="typing-text"></p>
+            </div>
+
+            <div class="message-input-area">
+              <input
+                type="text"
+                id="message-input"
+                placeholder="Type a message..."
+                autocomplete="off"
+              />
+              <button id="send-btn" class="btn btn-send">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+  </body>
+</html>
