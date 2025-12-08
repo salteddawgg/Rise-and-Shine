@@ -1,7 +1,7 @@
 // Initialize Socket.io connection
 const socket = io();
 
-// DOM Elements
+// DOM Elements (I spent way to long pulling my hair out over an error only to find i misspelled like half of these)
 const joinSection = document.getElementById("join-section");
 const chatSection = document.getElementById("chat-section");
 const usernameInput = document.getElementById("username-input");
@@ -29,22 +29,28 @@ joinBtn.addEventListener("click", () => {
   }
 
   if (username.length < 4) {
-    alert("Username must be at least 2 characters");
+    alert("Username must be at least 4 characters");
     return;
   }
 
-  //Im not going to sanitize every possibl word (turns out there are SO MANY), just a few for demo purposes
+  /* //Im not going to sanitize every possibl word (turns out there are SO MANY), just a few for demo purposes
   if (username === "fuck" || username === "shit" || username === "bitch") {
     alert("Please choose a appropriate username");
     return;
   }
+    */
 
   currentUsername = username;
   socket.emit("join", username);
 
   // Switch to chat view
+
   joinSection.classList.add("hidden");
+  joinSection.style.display = "none";
+  joinSection.setAttribute("aria-hidden", "true");
+
   chatSection.classList.remove("hidden");
+  chatSection.style.display = "";
   currentUserSpan.textContent = `You: ${username}`;
   messageInput.focus();
 });
@@ -57,7 +63,7 @@ const sendMessage = () => {
     return;
   }
   //lenght
-  if (message.length > 10) {
+  if (message.length > 200) {
     alert(" Max character length reached");
     return;
   }
@@ -153,8 +159,8 @@ function displaySystemMessage(message) {
   const messageDiv = document.createElement("div");
   messageDiv.className = "system-message";
   messageDiv.innerHTML = `<p>${message}</p>`;
-  if (messageDiv.textContent === "fuck" || "shit" || "bitch") {
-  }
+  //if (messageDiv.textContent === "fuck" || "shit" || "bitch") {
+  //}
 
   messagesContainer.appendChild(messageDiv);
   scrollToBottom();
