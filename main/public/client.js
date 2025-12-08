@@ -99,7 +99,7 @@ socket.on("join-success", () => {
 
   chatSection.classList.remove("hidden");
   chatSection.style.display = "";
-  currentUserSpan.textContent = `You: ${currentUsername}`;
+  currentUserSpan.textContent = `${currentUsername}`;
   messageInput.focus();
 });
 
