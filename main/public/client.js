@@ -42,17 +42,7 @@ joinBtn.addEventListener("click", () => {
 
   currentUsername = username;
   socket.emit("join", username);
-
-  // Switch to chat view
-
-  joinSection.classList.add("hidden");
-  joinSection.style.display = "none";
-  joinSection.setAttribute("aria-hidden", "true");
-
-  chatSection.classList.remove("hidden");
-  chatSection.style.display = "";
-  currentUserSpan.textContent = `You: ${username}`;
-  messageInput.focus();
+  // Wait for server response (join-success or join-error)
 });
 
 // Send Message
@@ -62,7 +52,7 @@ const sendMessage = () => {
   if (message === "") {
     return;
   }
-  //lenght
+
   if (message.length > 200) {
     alert(" Max character length reached");
     return;
@@ -101,6 +91,24 @@ leaveBtn.addEventListener("click", () => {
 });
 
 // Socket Events
+socket.on("join-success", () => {
+  // Switch to chat view only after successful join
+  joinSection.classList.add("hidden");
+  joinSection.style.display = "none";
+  joinSection.setAttribute("aria-hidden", "true");
+
+  chatSection.classList.remove("hidden");
+  chatSection.style.display = "";
+  currentUserSpan.textContent = `You: ${currentUsername}`;
+  messageInput.focus();
+});
+
+socket.on("join-error", (data) => {
+  alert(data.message);
+  usernameInput.value = ""; // Clear for retry
+  usernameInput.focus();
+});
+
 socket.on("receive-message", (data) => {
   displayMessage(data.username, data.message, data.timestamp, false);
 });

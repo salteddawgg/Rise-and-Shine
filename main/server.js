@@ -40,8 +40,20 @@ io.on("connection", (socket) => {
 
   // User joins
   socket.on("join", (username) => {
+    const usernameTaken = Object.values(users).includes(username);
+    if (usernameTaken) {
+      socket.emit("join-error", {
+        message: `Username "${username}" is already taken. Please choose a different one.`,
+      });
+      console.log(`${username} attempted to join but username was taken`);
+      return;
+    }
+
     users[socket.id] = username;
     userTimestamps[socket.id] = Date.now(); // Record join time
+    socket.emit("join-success", {
+      message: "You have successfully joined the chat",
+    });
     socket.broadcast.emit("user-joined", {
       username: username,
       message: `${username} joined the chat`,
