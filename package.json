@@ -1,0 +1,8 @@
+{
+  "name": "rise-and-shine-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "cd main && npm install --production && npm start"
+  }
+}
