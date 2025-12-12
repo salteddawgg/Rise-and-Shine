@@ -43,7 +43,17 @@
           <div class="chat-main">
             <div class="chat-header">
               <h2>Chat Room</h2>
-              <span id="current-user" class="current-user"></span>
+              <div class="current-user-area">
+                <span id="current-user" class="current-user"></span>
+                <button id="babble-btn" class="btn btn-small">
+                  Vote Babble
+                </button>
+                <span
+                  id="vote-count"
+                  class="vote-count"
+                  aria-hidden="true"
+                ></span>
+              </div>
             </div>
 
             <div id="messages-container" class="messages-container">

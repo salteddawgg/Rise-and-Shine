@@ -21,18 +21,37 @@ app.use(express.static(path.join(__dirname, "public")));
 // Store active users
 const users = {};
 const userTimestamps = {};
+
+// Babble mode state and vote tracking
+let DEFAULT_IDLE_TIMEOUT_MS = 600000; // 10 minutes
+let idleTimeoutMs = DEFAULT_IDLE_TIMEOUT_MS;
+let babbleActive = false;
+let votes = new Set(); // socket ids that voted
+let babbleTimer = null;
+
+// Cleanup loop: runs frequently so short idle time (e.g., 8s) is enforced during babble
 setInterval(() => {
   const now = Date.now();
-  const TIMEOUT_MS = 600000; //10 min timeout
 
   for (const socketID in userTimestamps) {
-    if (now - userTimestamps[socketID] > TIMEOUT_MS) {
-      console.log(`kicking user ${users[socketID]} for inactivity`);
+    if (now - userTimestamps[socketID] > idleTimeoutMs) {
+      const username = users[socketID];
+      console.log(`kicking user ${username} for inactivity`);
       delete users[socketID];
       delete userTimestamps[socketID];
+      votes.delete(socketID);
+      io.emit("user-left", {
+        username: username,
+        message: `${username} left the chat (idle)`,
+      });
+      io.emit("user-list", Object.values(users));
+      io.emit("vote-update", {
+        votes: votes.size,
+        required: Math.floor(Object.values(users).length / 2) + 1,
+      });
     }
   }
-}, 300000); //runs check around every 5 min
+}, 5000); // check every 5s
 
 // Socket.io connection handling
 io.on("connection", (socket) => {
@@ -60,6 +79,52 @@ io.on("connection", (socket) => {
     });
     io.emit("user-list", Object.values(users));
     console.log(`${username} joined the chat`);
+    // send current vote state to newly joined client
+    socket.emit("vote-update", {
+      votes: votes.size,
+      required: Math.floor(Object.values(users).length / 2) + 1,
+    });
+  });
+
+  // Handle babble voting
+  socket.on("vote-babble", () => {
+    if (babbleActive) return; // ignore votes while active
+
+    if (votes.has(socket.id)) {
+      votes.delete(socket.id);
+      socket.emit("vote-ack", { voted: false });
+    } else {
+      votes.add(socket.id);
+      socket.emit("vote-ack", { voted: true });
+    }
+
+    const required = Math.floor(Object.values(users).length / 2) + 1;
+    io.emit("vote-update", { votes: votes.size, required });
+
+    if (votes.size >= required && !babbleActive) {
+      // Activate babble mode
+      babbleActive = true;
+      idleTimeoutMs = 8000; // 8 seconds
+      io.emit("system-message", { message: "Babble mode has been turned ON" });
+      io.emit("babble-on", { duration: 80 });
+
+      // Automatically end babble after 80s
+      if (babbleTimer) clearTimeout(babbleTimer);
+      babbleTimer = setTimeout(() => {
+        // end babble
+        babbleActive = false;
+        idleTimeoutMs = DEFAULT_IDLE_TIMEOUT_MS;
+        votes.clear();
+        io.emit("system-message", {
+          message: "Babble mode has been turned OFF",
+        });
+        io.emit("babble-off");
+        io.emit("vote-update", {
+          votes: votes.size,
+          required: Math.floor(Object.values(users).length / 2) + 1,
+        });
+      }, 80 * 1000);
+    }
   });
 
   // Handle messages
@@ -96,11 +161,16 @@ io.on("connection", (socket) => {
     if (username) {
       delete users[socket.id];
       delete userTimestamps[socket.id]; // Clean up timestamp
+      votes.delete(socket.id);
       io.emit("user-left", {
         username: username,
         message: `${username} left the chat`,
       });
       io.emit("user-list", Object.values(users));
+      io.emit("vote-update", {
+        votes: votes.size,
+        required: Math.floor(Object.values(users).length / 2) + 1,
+      });
       console.log(`${username} left the chat`);
     }
   });

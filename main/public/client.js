@@ -13,6 +13,8 @@ const messagesContainer = document.getElementById("messages-container");
 const usersList = document.getElementById("users-list");
 const currentUserSpan = document.getElementById("current-user");
 const userCount = document.getElementById("user-count");
+const babbleBtn = document.getElementById("babble-btn");
+const voteCountSpan = document.getElementById("vote-count");
 const typingIndicator = document.getElementById("typing-indicator");
 const typingText = document.getElementById("typing-text");
 
@@ -100,6 +102,12 @@ socket.on("join-success", () => {
   chatSection.classList.remove("hidden");
   chatSection.style.display = "";
   currentUserSpan.textContent = `${currentUsername}`;
+  // Reset babble button state
+  if (babbleBtn) {
+    babbleBtn.disabled = false;
+    babbleBtn.textContent = "Vote Babble";
+  }
+  if (voteCountSpan) voteCountSpan.textContent = "";
   messageInput.focus();
 });
 
@@ -123,6 +131,45 @@ socket.on("user-left", (data) => {
 
 socket.on("user-list", (users) => {
   updateUsersList(users);
+});
+
+// Vote updates
+socket.on("vote-update", (data) => {
+  if (!voteCountSpan) return;
+  const { votes, required } = data;
+  voteCountSpan.textContent = `(${votes}/${required})`;
+});
+
+socket.on("vote-ack", (data) => {
+  if (!babbleBtn) return;
+  if (data.voted) {
+    babbleBtn.disabled = true;
+    babbleBtn.textContent = "Voted";
+  } else {
+    babbleBtn.disabled = false;
+    babbleBtn.textContent = "Vote Babble";
+  }
+});
+
+socket.on("babble-on", (data) => {
+  displaySystemMessage("Babble mode has been turned ON");
+  if (babbleBtn) {
+    babbleBtn.disabled = true;
+    babbleBtn.textContent = "Babble ON";
+  }
+});
+
+socket.on("babble-off", () => {
+  displaySystemMessage("Babble mode has been turned OFF");
+  if (babbleBtn) {
+    babbleBtn.disabled = false;
+    babbleBtn.textContent = "Vote Babble";
+  }
+  if (voteCountSpan) voteCountSpan.textContent = "";
+});
+
+socket.on("system-message", (data) => {
+  if (data && data.message) displaySystemMessage(data.message);
 });
 
 socket.on("user-typing", (data) => {
@@ -214,6 +261,16 @@ usernameInput.addEventListener("keypress", (e) => {
     joinBtn.click();
   }
 });
+
+// Babble button click (emit vote)
+if (typeof babbleBtn !== "undefined" && babbleBtn !== null) {
+  babbleBtn.addEventListener("click", () => {
+    socket.emit("vote-babble");
+    // optimistically disable until ack
+    babbleBtn.disabled = true;
+    babbleBtn.textContent = "Voted";
+  });
+}
 
 // Focus on username input when page loads
 window.addEventListener("load", () => {
